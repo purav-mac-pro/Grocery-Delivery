@@ -82,13 +82,13 @@ export const footerData = {
     ],
 
     contact: [
-        { icon: MapPinIcon, text: "123 Green Valley Rd, Portland" },
-        { icon: PhoneIcon, text: "+1 (111) 123-4567" },
-        { icon: MailIcon, text: "hello@example.com" },
+        { icon: MapPinIcon, text: "Okhla, New Delhi, India" },
+        { icon: PhoneIcon, text: "+91 8168889698" },
+        { icon: MailIcon, text: "puravmacpro@gmail.com" },
     ],
 
     bottom: {
-        copyright: "© 2026 Greatstack. All rights reserved.",
+        copyright: "© Grocery App by Purav. All rights reserved.",
         links: [
             { label: "Privacy Policy", href: "#" },
             { label: "Terms of Service", href: "#" },
