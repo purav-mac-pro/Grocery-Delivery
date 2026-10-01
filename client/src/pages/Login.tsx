@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from "react"
 import { heroSectionData } from "../assets/assets"
-import { Link, useNavigate } from "react-router-dom"
+import { Link } from "react-router-dom"
 import {
   BikeIcon,
   Loader2Icon,
@@ -8,6 +8,8 @@ import {
   MailIcon,
   UserIcon,
 } from "lucide-react"
+import { useAuth } from "../context/AuthContext"
+import toast from "react-hot-toast"
 
 const Login = () => {
   const [isLoginState, setIsLoginState] = useState(true)
@@ -16,15 +18,27 @@ const Login = () => {
   const [password, setPassword] = useState("")
   const [loading, setLoading] = useState(false)
 
-  const navigate = useNavigate()
+  const { login, register } = useAuth()
 
-  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setLoading(true)
 
-    setTimeout(() => {
-      navigate("/")
-    }, 1000)
+    try {
+      if (isLoginState) {
+        await login(email, password)
+      } else {
+        await register(name, email, password)
+      }
+    } catch (error: any) {
+      toast.error(
+        error?.response?.data?.message ||
+        error?.message ||
+        "Something went wrong"
+      )
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -55,6 +69,7 @@ const Login = () => {
           <div className="text-center mb-8">
             <Link to="/" className="inline-flex items-center gap-2 mb-6">
               <BikeIcon className="size-8 text-app-green" />
+
               <span className="text-2xl font-semibold text-app-green">
                 InstaCart
               </span>
@@ -73,7 +88,7 @@ const Login = () => {
 
               <button
                 type="button"
-                onClick={() => setIsLoginState(!isLoginState)}
+                onClick={() => setIsLoginState((prev) => !prev)}
                 className="text-orange-500 ml-1 font-semibold hover:text-orange-600 transition-colors"
               >
                 {isLoginState ? "Create one" : "Sign in"}
@@ -154,3 +169,4 @@ const Login = () => {
 }
 
 export default Login
+

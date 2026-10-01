@@ -11,9 +11,12 @@ import { inngest, functions } from "./inngest/index.js"
 import addressRouter from "./routes/addressRoutes.js";
 import adminRouter from "./routes/adminRoutes.js";
 import deliveryPartnerRouter from "./routes/deliveryPartnerRoutes.js";
+import { stripeWebhook } from "./webHooks.js";
 
 
 const app = express();
+
+app.post('/api/stripe', express.raw({type:'application/json'}), stripeWebhook)
 
 // Middleware
 app.use(cors())
@@ -36,7 +39,7 @@ app.use('/api/delivery', deliveryPartnerRouter)
 //Error Handle
 app.use((error:any, req:Request, res:Response, next: NextFunction)=>{
     console.error(error)
-    res.status(500).json({message: error.messsage})
+    res.status(500).json({message: error.message})
 })
 
 app.listen(port, () => {

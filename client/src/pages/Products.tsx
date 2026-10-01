@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import type { Product } from "../types";
-import { categoriesData, dummyProducts } from "../assets/assets";
+import { categoriesData } from "../assets/assets";
 import {
   ChevronDown,
   Home,
@@ -12,6 +12,8 @@ import {
 import ProductCard from "../components/ProductCard";
 import Loading from "../components/Loading";
 import FilterPanel from "../components/FilterPanel";
+import api from "../config/api";
+import toast from "react-hot-toast";
 
 const PRODUCTS_PER_PAGE = 8;
 
@@ -33,87 +35,27 @@ const Products = () => {
   const minPrice = searchParams.get("minPrice") || "";
   const maxPrice = searchParams.get("maxPrice") || "";
 
-  const fetchProducts = () => {
-    setLoading(true);
+  const fetchProducts = async () => {
+    setLoading(true)
+    try{
+    const params = new URLSearchParams()
+    if (category) params.set('category', category)
+    if (organic) params.set('organic', organic)
+    if (sort) params.set('sort', sort)
+    if (sort) params.set('sort', sort)
+    if (maxPrice) params.set('maxPrice', maxPrice)
+      params.set('page', String(page))
+      params.set('limit', '12')
 
-    let filteredProducts = [...dummyProducts];
-
-    // Category
-    if (category) {
-      filteredProducts = filteredProducts.filter(
-        (product) => product.category === category
-      );
-    }
-
-    // Organic
-    if (organic) {
-      filteredProducts = filteredProducts.filter(
-      (product) => String(product.isOrganic) === organic
-      );
-    }
-
-    // Min price
-    if (minPrice) {
-      filteredProducts = filteredProducts.filter(
-        (product) => product.price >= Number(minPrice)
-      );
-    }
-
-    // Max price
-    if (maxPrice) {
-      filteredProducts = filteredProducts.filter(
-        (product) => product.price <= Number(maxPrice)
-      );
-    }
-
-    // Sort
-    switch (sort) {
-      case "price_asc":
-        filteredProducts.sort((a, b) => a.price - b.price);
-        break;
-
-      case "price_desc":
-        filteredProducts.sort((a, b) => b.price - a.price);
-        break;
-
-      case "rating":
-        filteredProducts.sort((a, b) => b.rating - a.rating);
-        break;
-
-      case "name":
-        filteredProducts.sort((a, b) =>
-          a.name.localeCompare(b.name)
-        );
-        break;
-
-      default:
-        break;
-    }
-
-    // Remove out-of-stock products
-    filteredProducts = filteredProducts.filter(
-      (product) => product.stock > 0
-    );
-
-    // Calculate total pages
-    const pages = Math.max(
-      1,
-      Math.ceil(filteredProducts.length / PRODUCTS_PER_PAGE)
-    );
-
-    setTotalPages(pages);
-
-    // Pagination
-    const startIndex = (page - 1) * PRODUCTS_PER_PAGE;
-
-    const paginatedProducts = filteredProducts.slice(
-      startIndex,
-      startIndex + PRODUCTS_PER_PAGE
-    );
-
-    setProducts(paginatedProducts);
-    setLoading(false);
-  };
+    const {data} = await api.get(`/products?${params.toString()}`);
+    setProducts(data.products)
+    setTotalPages(data.pages)
+}catch(error){
+  toast.error(error?.response?.data?.message || error?.message);
+}finally{
+  setLoading(false)
+}
+}
 
   const updateFilter = (key: string, value: string) => {
     const newParams = new URLSearchParams(searchParams);
@@ -277,7 +219,7 @@ const Products = () => {
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 xl:gap-8">
                 {products.map((product) => (
                   <ProductCard
-                    key={product._id}
+                    key={product.id}
                     product={product}
                   />
                 ))}
