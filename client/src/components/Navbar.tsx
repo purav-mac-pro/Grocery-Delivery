@@ -12,14 +12,28 @@ import {
   ShoppingCartIcon,
   UserIcon,
   XIcon,
+  BellIcon,
 } from "lucide-react";
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useCart } from "../context/CartContext";
 import { useAuth } from "../context/AuthContext";
 
+import { useNotifications } from "../context/NotificationContext";
+
 const Navbar = () => {
   const {user,logout} = useAuth()
+
+  //notification
+  const {
+    notifications,
+    unreadCount,
+    markAsRead,
+    markAllAsRead,
+} = useNotifications();
+
+const [notificationsOpen, setNotificationsOpen] =
+    useState(false);
 
   // Cart context
   const { cartCount, setIsCartOpen } = useCart();
@@ -103,6 +117,118 @@ const Navbar = () => {
 
           {/* Right Actions */}
           <div className="flex items-center gap-3">
+
+            {/* Notifications */}
+{user && (
+    <div className="relative">
+        <button
+            type="button"
+            onClick={() =>
+                setNotificationsOpen((prev) => !prev)
+            }
+            className="relative p-2 rounded-xl hover:bg-orange-50 transition-colors"
+            aria-label="Notifications"
+        >
+            <BellIcon className="size-5 text-zinc-900" />
+
+            {unreadCount > 0 && (
+                <span className="absolute -top-1 -right-1 min-w-4 h-4 px-1 bg-app-orange text-white text-[10px] rounded-full flex items-center justify-center">
+                    {unreadCount > 99 ? "99+" : unreadCount}
+                </span>
+            )}
+        </button>
+
+        {notificationsOpen && (
+            <>
+                <div
+                    className="fixed inset-0 z-40"
+                    onClick={() =>
+                        setNotificationsOpen(false)
+                    }
+                />
+
+                <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-white rounded-2xl shadow-xl border border-app-border z-50 overflow-hidden">
+                    <div className="flex items-center justify-between px-4 py-3 border-b border-app-border">
+                        <h3 className="font-semibold text-app-green">
+                            Notifications
+                        </h3>
+
+                        {unreadCount > 0 && (
+                            <button
+                                type="button"
+                                onClick={markAllAsRead}
+                                className="text-xs text-app-orange hover:underline"
+                            >
+                                Mark all as read
+                            </button>
+                        )}
+                    </div>
+
+                    <div className="max-h-96 overflow-y-auto">
+                        {notifications.length === 0 ? (
+                            <div className="p-8 text-center text-sm text-zinc-500">
+                                No notifications yet.
+                            </div>
+                        ) : (
+                            notifications.map((notification) => (
+                                <button
+                                    key={notification.id}
+                                    type="button"
+                                    onClick={() => {
+                                        if (!notification.isRead) {
+                                            markAsRead(notification.id);
+                                        }
+
+                                        setNotificationsOpen(false);
+
+                                        if (notification.orderId) {
+                                            navigate(
+                                                `/orders/${notification.orderId}`
+                                            );
+                                        }
+                                    }}
+                                    className={`w-full text-left px-4 py-3 border-b border-app-border hover:bg-orange-50 transition-colors ${
+                                        !notification.isRead
+                                            ? "bg-orange-50/60"
+                                            : "bg-white"
+                                    }`}
+                                >
+                                    <div className="flex gap-3">
+                                        <div className="size-9 rounded-full bg-app-orange/10 flex items-center justify-center shrink-0">
+                                            <BellIcon className="size-4 text-app-orange" />
+                                        </div>
+
+                                        <div className="min-w-0 flex-1">
+                                            <p className="text-sm font-semibold text-app-green">
+                                                {notification.title}
+                                            </p>
+
+                                            <p className="text-xs text-zinc-600 mt-1">
+                                                {notification.message}
+                                            </p>
+
+                                            <p className="text-[11px] text-zinc-400 mt-1">
+                                                {new Date(
+                                                    notification.createdAt
+                                                ).toLocaleString()}
+                                            </p>
+                                        </div>
+
+                                        {!notification.isRead && (
+                                            <span className="size-2 rounded-full bg-app-orange mt-2 shrink-0" />
+                                        )}
+                                    </div>
+                                </button>
+                            ))
+                        )}
+                    </div>
+                </div>
+            </>
+        )}
+    </div>
+)}
+
+
             {/* Cart */}
             <button
               type="button"

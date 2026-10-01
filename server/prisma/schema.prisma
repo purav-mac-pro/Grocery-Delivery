@@ -8,16 +8,17 @@ datasource db {
 }
 
 model User {
-  id        String    @id @default(uuid())
-  name      String
-  email     String    @unique
-  password  String
-  phone     String?   @default("")
-  avatar    String?   @default("")
-  addresses Address[]
-  orders    Order[]
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  id            String         @id @default(uuid())
+  name          String
+  email         String         @unique
+  password      String
+  phone         String?        @default("")
+  avatar        String?        @default("")
+  addresses     Address[]
+  orders        Order[]
+  notifications Notification[]
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
 }
 
 model Address {
@@ -57,6 +58,7 @@ model Order {
   id              String @id @default(uuid())
   userId          String
   user            User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   items           Json
   shippingAddress Json
   paymentMethod   String @default("card")
@@ -69,9 +71,12 @@ model Order {
 
   deliveryPartnerId String?
   deliveryPartner   DeliveryPartner? @relation(fields: [deliveryPartnerId], references: [id], onDelete: SetNull)
-  deliveryOtp       String?          @default("")
-  liveLocation      Json?
-  isPaid            Boolean?         @default(false)
+
+  deliveryOtp String? @default("")
+  liveLocation Json?
+  isPaid Boolean? @default(false)
+
+  notifications Notification[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -89,4 +94,21 @@ model DeliveryPartner {
   orders      Order[]
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String
+  orderId   String?
+
+  title     String
+  message   String
+  type      String   @default("ORDER_STATUS")
+
+  isRead    Boolean  @default(false)
+
+  createdAt DateTime @default(now())
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  order Order? @relation(fields: [orderId], references: [id], onDelete: Cascade)
 }

@@ -6,6 +6,8 @@ import productRouter from "./routes/productRoutes.js";
 import uploadRouter from "./routes/uploadRoutes.js";
 import orderRouter from "./routes/orderRoutes.js";
 
+import notificationRouter from "./routes/notificationRoutes.js";
+
 import { serve } from "inngest/express";
 import { inngest, functions } from "./inngest/index.js"
 import addressRouter from "./routes/addressRoutes.js";
@@ -35,6 +37,8 @@ app.use('/api/inngest', serve({client: inngest, functions}));
 app.use('/api/addresses', addressRouter)
 app.use('/api/admin', adminRouter)
 app.use('/api/delivery', deliveryPartnerRouter)
+
+app.use('/api/notifications', notificationRouter)
 
 //Error Handle
 app.use((error:any, req:Request, res:Response, next: NextFunction)=>{

@@ -1,3 +1,4 @@
+import { createOrderStatusNotification } from "../services/notificationService.js";
 import { Request, Response } from "express"
 import { prisma } from "../config/prisma.js"
 import bcrypt from 'bcrypt'
@@ -96,10 +97,29 @@ export const assignDeliveryPartner = async(req: Request, res: Response) => {
         })
     }
 
-    await prisma.order.update({
-        where: {id: order!.id},
-        data: {deliveryPartnerId: partner!.id, deliveryOtp: otp, status, statusHistory: history}
-    })
+    
+    
+    const oldStatus = order!.status;
 
-    res.json({order})
+const updatedOrder = await prisma.order.update({
+    where: { id: order!.id },
+    data: {
+        deliveryPartnerId: partner!.id,
+        deliveryOtp: otp,
+        status,
+        statusHistory: history
+    }
+});
+
+await createOrderStatusNotification({
+    userId: order!.userId,
+    orderId: order!.id,
+    oldStatus,
+    newStatus: status,
+});
+
+res.json({ order: updatedOrder });
+
+
+
 }

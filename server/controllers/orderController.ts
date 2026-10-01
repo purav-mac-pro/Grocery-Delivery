@@ -1,3 +1,4 @@
+import { createOrderStatusNotification } from "../services/notificationService.js";
 import { Request, Response } from "express";
 import {prisma} from "../config/prisma.js"
 import {inngest} from "../inngest/index.js"
@@ -60,7 +61,18 @@ export const createOrder = async (req: Request, res: Response)=>{
             statusHistory: [{status: "Placed", note: "Order placed successfully", timestamp: new Date()}]
         }
     })
-    
+
+
+
+    await createOrderStatusNotification({
+    userId: order.userId,
+    orderId: order.id,
+    oldStatus: null,
+    newStatus: order.status,
+    });
+
+
+
     if(paymentMethod === "card"){
 
         const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string)
@@ -151,15 +163,37 @@ export const updateOrderStatus = async (req: Request, res:Response)=>{
         return res.status(404).json({message:"Order not found"});
     }
 
-    const history = (Array.isArray(order.statusHistory) ? order.statusHistory : []) as any[];
-    history.push({status, note: note || `Order ${status.toLowerCase()}`, timestamp: new Date()})
+    const oldStatus = order.status;
 
-    const updatedOrder = await prisma.order.update({
-        where: {id: req.params.id as string}, 
-        data: {status, statusHistory: history}
-    })
+
     
-    res.json({order: updatedOrder})
+const history = (Array.isArray(order.statusHistory) ? order.statusHistory : []) as any[];
+
+history.push({
+    status,
+    note: note || `Order ${status.toLowerCase()}`,
+    timestamp: new Date()
+});
+
+const updatedOrder = await prisma.order.update({
+    where: { id: req.params.id as string },
+    data: {
+        status,
+        statusHistory: history
+    }
+});
+
+await createOrderStatusNotification({
+    userId: order.userId,
+    orderId: order.id,
+    oldStatus,
+    newStatus: status,
+});
+
+res.json({ order: updatedOrder });
+
+
+
 }
 
 //Get all orders (Admin)

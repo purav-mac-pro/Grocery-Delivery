@@ -42,3 +42,8 @@ export type Order = Prisma.OrderModel
  * 
  */
 export type DeliveryPartner = Prisma.DeliveryPartnerModel
+/**
+ * Model Notification
+ * 
+ */
+export type Notification = Prisma.NotificationModel

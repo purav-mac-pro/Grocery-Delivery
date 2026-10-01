@@ -1,3 +1,4 @@
+import { createOrderStatusNotification } from "../services/notificationService.js";
 import { Request, Response } from "express";
 import {prisma} from "../config/prisma.js";
 import bcrypt from 'bcrypt'
@@ -94,16 +95,41 @@ export const completeDelivery = async (req: Request, res: Response)=>{
         return res.status(500).json({message: "Invalid OTP"})
     }
 
-    const history = order.statusHistory as any[];
+    
 
-    history.push({status:'Delivered', note: "Delivered by partner", timestamp: new Date()})
+    const oldStatus = order.status;
 
-    const updatedOrder = await prisma.order.update({
-        where:{id: order.id},
-        data: {status: 'Delivered', statusHistory: history, deliveryOtp:""}
-    })
+const history = order.statusHistory as any[];
 
-    res.json({order: updatedOrder, message:"Delivery completed successfully"})
+history.push({
+    status: "Delivered",
+    note: "Delivered by partner",
+    timestamp: new Date()
+});
+
+const updatedOrder = await prisma.order.update({
+    where: { id: order.id },
+    data: {
+        status: "Delivered",
+        statusHistory: history,
+        deliveryOtp: ""
+    }
+});
+
+await createOrderStatusNotification({
+    userId: order.userId,
+    orderId: order.id,
+    oldStatus,
+    newStatus: "Delivered",
+});
+
+res.json({
+    order: updatedOrder,
+    message: "Delivery completed successfully"
+});
+
+
+
 }
 
 //cancel delivery
@@ -118,17 +144,40 @@ export const cancelDelivery = async(req: Request, res: Response) => {
         return res.status(400).json({message: "Cannot cancel a delivered order"});
     }
 
-    const history = order!.statusHistory as any[];
+    
+    
+    const oldStatus = order!.status;
 
-    history.push({status: 'Cancelled', note: reason || "", timestamp: new Date()})
+const history = order!.statusHistory as any[];
+
+history.push({
+    status: "Cancelled",
+    note: reason || "",
+    timestamp: new Date()
+});
+
+const updatedOrder = await prisma.order.update({
+    where: { id: order!.id },
+    data: {
+        status: "Cancelled",
+        statusHistory: history
+    }
+});
+
+await createOrderStatusNotification({
+    userId: order!.userId,
+    orderId: order!.id,
+    oldStatus,
+    newStatus: "Cancelled",
+});
+
+res.json({
+    order: updatedOrder,
+    message: "Delivery cancelled"
+});
 
 
-    const updatedOrder = await prisma.order.update({
-        where:{id: order!.id},
-        data: {status: "Cancelled", statusHistory: history}
-    })
 
-    res.json({order: updatedOrder, message: "Delivery cancelled"})
 }
 
 //update order status
@@ -145,16 +194,37 @@ export const updateDeliveryStatus = async(req: Request, res: Response) =>{
         where: {id: req.params.id as string, deliveryPartnerId: req.partner!.id}
     })
 
-    const history = order!.statusHistory as any[];
 
-    history.push({status, note: `Status updated to ${status}`, timestamp: new Date()})
 
-    const updatedOrder = await prisma.order.update({
-        where: {id: order!.id},
-        data: {status, statusHistory: history}
-    })
+    const oldStatus = order!.status;
 
-    res.json({order: updatedOrder})
+const history = order!.statusHistory as any[];
+
+history.push({
+    status,
+    note: `Status updated to ${status}`,
+    timestamp: new Date()
+});
+
+const updatedOrder = await prisma.order.update({
+    where: { id: order!.id },
+    data: {
+        status,
+        statusHistory: history
+    }
+});
+
+await createOrderStatusNotification({
+    userId: order!.userId,
+    orderId: order!.id,
+    oldStatus,
+    newStatus: status,
+});
+
+res.json({ order: updatedOrder });
+
+
+
 }
 
 //update live location
