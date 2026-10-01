@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import type { Product } from "../types";
 import { categoriesData } from "../assets/assets";
+import axios from "axios";
 import {
   ChevronDown,
   Home,
@@ -14,8 +15,6 @@ import Loading from "../components/Loading";
 import FilterPanel from "../components/FilterPanel";
 import api from "../config/api";
 import toast from "react-hot-toast";
-
-const PRODUCTS_PER_PAGE = 8;
 
 const Products = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -50,8 +49,14 @@ const Products = () => {
     const {data} = await api.get(`/products?${params.toString()}`);
     setProducts(data.products)
     setTotalPages(data.pages)
-}catch(error){
-  toast.error(error?.response?.data?.message || error?.message);
+}catch (error: unknown) {
+  if (axios.isAxiosError(error)) {
+    toast.error(error.response?.data?.message || "Failed to fetch products");
+  } else if (error instanceof Error) {
+    toast.error(error.message);
+  } else {
+    toast.error("Failed to fetch products");
+  }
 }finally{
   setLoading(false)
 }

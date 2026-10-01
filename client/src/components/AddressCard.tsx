@@ -4,6 +4,7 @@ import { CheckIcon, MapPinIcon, PencilIcon, Trash2Icon } from 'lucide-react';
 import api from '../config/api';
 import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
+import axios from "axios";
 
 interface AddressCardProps {
     addr: Address;
@@ -23,8 +24,15 @@ const AddressCard = ({ addr, onEditHandler, setAddresses }: AddressCardProps) =>
             setAddresses(data.addresses);
             updateUser({addresses: data.addresses})
             toast.success('Address removed')
-        } catch (error){
-            toast.error(error.response?.data?.message || error?.message);
+        } 
+        catch (error: unknown) {
+            if (axios.isAxiosError(error)) {
+                toast.error(error.response?.data?.message || "Something went wrong");
+            } else if (error instanceof Error) {
+                toast.error(error.message);
+            } else {
+                toast.error("Something went wrong");
+            }
         }
     }
 
